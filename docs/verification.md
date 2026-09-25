@@ -46,3 +46,13 @@ Final repository status checks remained clean in both LifePilot and LifeAdmin. L
 All six audit findings have dedicated regression coverage: nullable nongroup expense responses; approval expiration before reservation and before HTTP submission; locally available owner-bound operation status during upstream outage; truthful previews for succeeded/submitting/unknown/failed operations; renewed approval after persisted older evidence; and malformed collection rejection. Schema v1-to-v2 migration preserves rows and rejects future unknown versions. Balance access and data now use one group snapshot. The locked setup application rejects every tested MCP method/path with HTTP 503 and exposes no secret values.
 
 Final commands and deployment status are recorded in docs/deployment.md. No deployed database migration is part of the setup-page deployment.
+
+## Expanded verification — 2026-09-25
+
+Re-ran the full suite after API-key setup was reported: **130 passed in 2.25 seconds, no skips**. The PostgreSQL fixture used an isolated temporary local cluster; no deployed database was accessed. Added 12 checks covering 1,000 deterministic generated allocations (1–30 participants, one-cent and maximum supported totals, multiple payers, conservation and order independence), malformed/duplicate/missing authentication headers, non-ASCII hosts, null Origin, identity injection, and caller-context cleanup after downstream failure.
+
+Ruff lint and formatting (28 files), mypy (15 modules), dependency consistency, dependency vulnerability audit, and wheel/source build passed. The official SDK stdio demonstration discovered all 10 tools. The synthetic write demonstration made exactly one mocked POST for two execution requests, with zero real upstream network calls.
+
+Live Render checks: `/`, `/privacy`, and `/health` returned 200 with `X-Content-Type-Options: nosniff`. Health explicitly reported `setup_required` and `mcp_enabled: false`. GET/POST/DELETE/OPTIONS/HEAD on `/mcp` and POST on `/mcp/nested` with an invalid synthetic bearer token returned 503. These are setup-lock checks, not proof of live configured-mode authentication. Configured-mode authentication and MCP protocol behavior passed locally against synthetic upstream data.
+
+No new implementation defect was found. No real expense was created. The newly supplied Splitwise key was not retrieved or validated; setup mode deliberately does not use it. Real-account reads, deployed PostgreSQL/TLS, production caller authentication, external approval signing, and LifeAdmin end-to-end integration remain unverified until activation/integration prerequisites are complete. Earlier historical results above describe their original runs, not the current deployment state.

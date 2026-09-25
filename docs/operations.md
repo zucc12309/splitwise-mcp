@@ -14,11 +14,11 @@ This command uses `SW_DATABASE`; verify that target privately first. It was run 
 
 Back up SQLite with its online backup API, or stop the process before copying all database files; copying a live main file without its WAL is unsafe. Keep encrypted, access-controlled PostgreSQL backups using your provider's supported method. Test restoration to a separate local/test target. Never restore a stale ledger and re-enable writes without reconciling expenses created since the backup—this can defeat duplicate prevention.
 
-## Optional Render setup (configuration prepared, not deployed)
+## Render setup deployment and activation
 
 `render.yaml` defines a **separate free web service**, without provisioning a database. Its initial `SW_SETUP_ONLY=true` deployment opens no database and serves a registration homepage, privacy page and setup health status. All MCP requests are rejected with HTTP 503. This is a setup deployment, not a connected Splitwise service. Auto-deploy is off so pushed changes require an intentional deployment. The new-folder decision keeps its upstream credential and approval keys away from existing app users and preserves existing startup behavior. Costs are an extra service's resource usage and deployment setup. Mounting into the existing FastAPI service could avoid another process, but would require a deliberate authenticated integration and lifecycle review; it is not wired through `/commerce` or testing OTP authentication.
 
-Before deployment:
+Before activating MCP access:
 
 1. Choose an existing suitable durable PostgreSQL database or external provider. Use a dedicated role/schema and backups. Never point `SW_DATABASE` at Render's ephemeral filesystem. Do not rely on a temporary/free database's expiry lifecycle for financial execution state.
 2. Set `SW_DATABASE=postgresql://...?...` with `sslmode=verify-full`; configure the provider's trusted CA (for example via `sslrootcert` or appropriate libpq environment). The URI and password are secret. Verify DNS/certificates instead of disabling certificate validation.
