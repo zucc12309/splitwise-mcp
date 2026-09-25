@@ -8,4 +8,16 @@ Activation prerequisites: SW_OWNER, SW_ACCOUNT_ID, SW_API_KEY, SW_DATABASE with 
 
 The callback URL on Splitwise app registration should remain blank because personal API-key authentication does not implement OAuth callbacks. Support can use https://github.com/zucc12309/splitwise-mcp/issues. Never post API keys or financial data to public issues.
 
-Render deployment URL and live-check results will be added after verification.
+## Verified live deployment
+
+- Homepage: https://personal-splitwise-mcp.onrender.com
+- Privacy: https://personal-splitwise-mcp.onrender.com/privacy
+- Dashboard: https://dashboard.render.com/web/srv-daqtv3rncjis73bcm1p0
+- Render service: `srv-daqtv3rncjis73bcm1p0`
+- Successful deployment: `dep-daqtv4bncjis73bcm33g`
+- Deployed code commit: `faafa8adadc8f3b4eaf610896edd3e7b45027555`
+- Render reported Live; initial build/deploy completed in 52.9 seconds.
+- Public verification: homepage and privacy returned HTTP 200. `/health` returned HTTP 200 with `{"status":"setup_required","mcp_enabled":false}`. GET, POST, DELETE and OPTIONS on `/mcp` all returned HTTP 503 as intended.
+- Browser verification confirmed the registration homepage and its privacy/source/support links.
+
+This is a deployed setup service, not yet an authenticated, connected Splitwise MCP service. No real Splitwise API call or expense mutation was performed. The free service may sleep when inactive. Service automatic code deployments are disabled; this documentation-only follow-up does not change the deployed code commit.
