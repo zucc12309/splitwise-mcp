@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=83", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "personal-splitwise-mcp"
+version = "0.1.0"
+description = "Owner-bound personal Splitwise MCP with immutable drafts"
+requires-python = ">=3.11"
+dependencies = [
+  "mcp==1.30.0", "httpx==0.28.1", "pydantic==2.13.5",
+  "cryptography==50.0.1", "uvicorn==0.53.0", "starlette==1.7.0",
+]
+[project.optional-dependencies]
+postgres = ["psycopg[binary]==3.3.6"]
+dev = ["pytest==9.1.1", "pytest-asyncio==1.4.0", "ruff==0.16.8", "mypy==2.3.1", "build==1.6.1", "pip-audit==2.10.1"]
+[project.scripts]
+splitwise-mcp = "splitwise_mcp.cli:main"
+[tool.setuptools.packages.find]
+where = ["src"]
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+[tool.ruff]
+line-length = 100
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]
+[tool.mypy]
+python_version = "3.11"
+check_untyped_defs = true
+files = ["src"]

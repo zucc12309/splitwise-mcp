@@ -1,0 +1,28 @@
+# Prepared only. Review before deployment; no database/service is provisioned here.
+services:
+  - type: web
+    name: personal-splitwise-mcp
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.lock && pip install --no-deps .
+    startCommand: splitwise-mcp serve
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.3
+      - key: SW_REMOTE
+        value: "true"
+      - key: SW_ENABLE_WRITES
+        value: "false"
+      - key: SW_OWNER
+        sync: false
+      - key: SW_ACCOUNT_ID
+        sync: false
+      - key: SW_API_KEY
+        sync: false
+      - key: SW_DATABASE
+        sync: false
+      - key: SW_CALLER_TOKEN_SHA256
+        sync: false
+      - key: SW_ALLOWED_HOST
+        sync: false
