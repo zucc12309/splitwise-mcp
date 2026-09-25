@@ -2,7 +2,7 @@
 
 A standalone prototype in `/Users/priyanshupatel/Documents/GitHub/splitwise-mcp`, created at the user's requested location. Local stdio is the default. Reads and immutable expense previews work without enabling writes. Optional Streamable HTTP has separate owner authentication and requires PostgreSQL.
 
-**Live Splitwise connectivity and expense creation have not been verified. All development calls used synthetic fixtures. No service was deployed or production database migrated.**
+**Live Splitwise connectivity and expense creation have not been verified. All development calls used synthetic fixtures. No production database migration or real expense creation has been performed. The credential-free setup deployment exposes only a homepage/privacy page and rejects MCP requests until configured.**
 
 ## Run the safe demonstration
 
@@ -81,6 +81,8 @@ No Redis, LLM, analytics, proxy, Flutter, or LifeAdmin/LifePilot startup changes
 The same operation key must identify the same proposal. Account, group, currency, payer and participant IDs are explicit. Names never resolve identity: two Alexes remain two IDs for the human to disambiguate. v1 requires the owner among expense participants. All equal shares are sent explicitly so upstream equal-split defaults cannot change payer or rounding choices.
 
 Boundaries: one expense page (1–50 items, offset ≤10,000), at most 30 draft participants, 200 members per returned group, 2 MB upstream body, 256 KB tool result, 32 KB tool arguments/HTTP request, four active tool calls and four upstream connections. Each read has at most three attempts; each attempt has a 20-second whole-response deadline and 5-second connect / 10-second I/O timeouts. A tool has a 90-second deadline. Oversized responses fail rather than silently returning partial authoritative data.
+
+The Render blueprint starts in `SW_SETUP_ONLY=true` mode. This opens no database and exposes no MCP tools; `/health` reports `setup_required`. After private configuration and an explicitly authorized schema migration, set `SW_SETUP_ONLY=false` to start authenticated MCP.
 
 See [tool contracts and examples](docs/tools.md), [security and approval](docs/security.md), [Render/storage/recovery runbook](docs/operations.md), [documentation verification](docs/research.md), and [test results](docs/verification.md).
 

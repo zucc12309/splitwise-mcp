@@ -34,7 +34,7 @@ python human_approve.py approve --key human-private.pem \
 
 The interface checks the owner/account and canonical draft hash, displays escaped JSON (so names cannot inject terminal controls), requires typing `APPROVE` plus the full draft ID, then signs for at most five minutes. Transfer the resulting evidence through the host's protected input to `splitwise_create_expense`; don't publish it or put it in logs. Signing itself does not post. An operator must explicitly approve each exact real expense; no real operation is approved by this setup guide.
 
-Evidence binds protocol version, owner, Splitwise account, draft ID, canonical draft hash, operation `create_expense`, expiry and nonce. The server verifies the signature before reserving, and rechecks access, group/member identity and currency availability. Material changes require a new preview. A changed proposal requires a new operation key and approval. A single operation can transition from approved to submitting only once; signature reuse cannot produce a second submission.
+Evidence binds protocol version, owner, Splitwise account, draft ID, canonical draft hash, operation `create_expense`, expiry and nonce. The server verifies the signature before reserving, and rechecks access, group/member identity and currency availability. Material changes require a new preview. A changed proposal requires a new operation key and approval. Acceptance of verified approval and reservation are one atomic conditional update. The approval deadline is enforced in that transaction and immediately before the HTTP request. A fresh grant can replace an old one only for a draft not yet submitted; signature reuse cannot produce a second submission.
 
 ## Privacy and secret handling
 

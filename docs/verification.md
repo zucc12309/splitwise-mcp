@@ -39,3 +39,10 @@ Coverage includes integer money conservation and deterministic remainder; equal/
 Unverified: real-account connectivity, Splitwise account-specific permissions/Pro conditions, a real human's independently hosted signer, real create responses, Render provisioning/TLS/cold-start behavior, and third-party MCP host compatibility. Mocked protocol tests do not establish live E2E behavior.
 
 Final repository status checks remained clean in both LifePilot and LifeAdmin. Live credential availability was checked by presence only: required environment values were absent and no local `.env` existed. Therefore the live read-only smoke test was not run.
+
+
+## Audit fixes and setup deployment verification — 2026-09-25
+
+All six audit findings have dedicated regression coverage: nullable nongroup expense responses; approval expiration before reservation and before HTTP submission; locally available owner-bound operation status during upstream outage; truthful previews for succeeded/submitting/unknown/failed operations; renewed approval after persisted older evidence; and malformed collection rejection. Schema v1-to-v2 migration preserves rows and rejects future unknown versions. Balance access and data now use one group snapshot. The locked setup application rejects every tested MCP method/path with HTTP 503 and exposes no secret values.
+
+Final commands and deployment status are recorded in docs/deployment.md. No deployed database migration is part of the setup-page deployment.

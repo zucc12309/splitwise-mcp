@@ -17,7 +17,7 @@ The server publishes closed input and output JSON schemas. See `tool-schemas.jso
 
 Endpoint mapping follows the [official API reference](https://dev.splitwise.com/). Draft/status/approval are this package's concepts, not invented upstream endpoints.
 
-Expenses support `group_id` OR `friend_id` and timezone-qualified `dated_after`, `dated_before`, `updated_after`, `updated_before`. An after/before pair must be ordered. A full page returns `has_more: "unknown"`; the caller may explicitly request the next page. At the offset cap, `next_offset` is null even if more records might exist. Groups/friends are local slices of one size-bounded upstream response; no upstream pagination is claimed for them. Empty lists are valid only after successful, validated upstream responses. Deleted single expenses report `unavailable`; history rows retain a `deleted` flag.
+Expenses support `group_id` OR `friend_id` and timezone-qualified `dated_after`, `dated_before`, `updated_after`, `updated_before`. An after/before pair must be ordered. A full page returns `has_more: "unknown"`; the caller may explicitly request the next page. At the offset cap, `next_offset` is null even if more records might exist. Groups/friends are local slices of one size-bounded upstream response; no upstream pagination is claimed for them. Empty lists are valid only after successful, validated upstream responses. Nongroup expenses retain the upstream `group_id:null` in read outputs (creation still explicitly uses `group_id:0`). Deleted single expenses report `unavailable`; history rows retain a `deleted` flag.
 
 Balances are group-specific original debts, including parties who may be netted differently by Splitwise's simplified view. No account-wide net total is claimed. `group_id=0` is rejected for balances; the tool does not infer nongroup direction from ambiguous net signs or partially fetched history. It never sums across currencies.
 
@@ -40,7 +40,7 @@ Example preview:
 }
 ```
 
-The output has `draft_id`, `expires_at` (Unix seconds, 15-minute TTL), `owner`, `account`, `group`, normalized `proposal`, `allocations`, `draft_hash`, warnings and `posted:false`. The normalized paid shares are `100.00 / 0.00 / 0.00`; owed shares are `33.34 / 33.33 / 33.33`. Allocations show one extra paise assigned to ID 1. ₹1,200 splits into ₹400 each. Participant ordering is normalized by ID, and integer arithmetic preserves every paise.
+The output has `draft_id`, `expires_at` (Unix seconds, 15-minute TTL), `owner`, `account`, `group`, normalized `proposal`, `allocations`, `draft_hash`, warnings, `operation_state`, `expense_id` and `posted:false` for a new draft. Repeated previews show the saved state: `posted:true` for confirmed success and `posted:null` for in-flight/unknown outcomes; they never claim an existing submitted operation has not posted. The normalized paid shares are `100.00 / 0.00 / 0.00`; owed shares are `33.34 / 33.33 / 33.33`. Allocations show one extra paise assigned to ID 1. ₹1,200 splits into ₹400 each. Participant ordering is normalized by ID, and integer arithmetic preserves every paise.
 
 An explicit split with two payers uses `split:"explicit"` and participants `[{"user_id":1,"paid":"60.00","owed":"20.00"},{"user_id":2,"paid":"40.00","owed":"80.00"}]` for a `100.00` total. Equal mode rejects caller-supplied owed amounts; explicit mode requires them all.
 

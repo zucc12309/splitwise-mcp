@@ -37,7 +37,7 @@ class ApprovalVerifier:
         except ValueError:
             raise AppError("configuration", "Invalid approval public key.") from None
 
-    def verify(self, token: str, row: dict, owner: str, account_id: int) -> None:
+    def verify(self, token: str, row: dict, owner: str, account_id: int) -> Claims:
         if self.key is None:
             raise AppError(
                 "writes_disabled",
@@ -58,6 +58,7 @@ class ApprovalVerifier:
                 or not 16 <= len(claims.nonce) <= 128
             ):
                 raise ValueError
+            return claims
         except (ValueError, TypeError, InvalidSignature, ValidationError):
             raise AppError(
                 "invalid_approval",

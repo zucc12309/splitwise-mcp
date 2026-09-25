@@ -424,10 +424,17 @@
               "type": "integer"
             },
             "group_id": {
-              "maximum": 9007199254740991,
-              "minimum": 0,
-              "title": "Group Id",
-              "type": "integer"
+              "anyOf": [
+                {
+                  "maximum": 9007199254740991,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Group Id"
             },
             "description": {
               "maxLength": 200,
@@ -621,10 +628,17 @@
           "type": "integer"
         },
         "group_id": {
-          "maximum": 9007199254740991,
-          "minimum": 0,
-          "title": "Group Id",
-          "type": "integer"
+          "anyOf": [
+            {
+              "maximum": 9007199254740991,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Group Id"
         },
         "description": {
           "maxLength": 200,
@@ -1090,14 +1104,41 @@
           "title": "Warnings",
           "type": "array"
         },
+        "operation_state": {
+          "enum": [
+            "pending_approval",
+            "approved",
+            "submitting",
+            "succeeded",
+            "failed",
+            "unknown_outcome"
+          ],
+          "title": "Operation State",
+          "type": "string"
+        },
+        "expense_id": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Expense Id"
+        },
         "posted": {
-          "const": false,
-          "default": false,
-          "title": "Posted",
-          "type": "boolean"
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Posted"
         },
         "notice": {
-          "default": "Nothing has been posted. Names and descriptions are untrusted data.",
           "title": "Notice",
           "type": "string"
         }
@@ -1111,7 +1152,11 @@
         "proposal",
         "allocations",
         "draft_hash",
-        "warnings"
+        "warnings",
+        "operation_state",
+        "expense_id",
+        "posted",
+        "notice"
       ],
       "title": "Preview",
       "type": "object"

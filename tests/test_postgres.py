@@ -66,10 +66,13 @@ def test_postgres_migration_concurrent_reservation_and_restart(pg_store):
     store.check_schema()
     row = store.put("owner", 1, "operation-001", "hash", {"synthetic": True})
     assert Store(store.database).get("owner", 1, row["id"])["state"] == "pending_approval"
-    store.approve("owner", 1, row["id"], "approval-hash")
+    store.approve("owner", 1, row["id"], "approval-hash", row["expires"])
     with ThreadPoolExecutor(max_workers=8) as pool:
         results = list(
-            pool.map(lambda _: store.reserve("owner", 1, row["id"], "approval-hash"), range(8))
+            pool.map(
+                lambda _: store.reserve("owner", 1, row["id"], "approval-hash", row["expires"]),
+                range(8),
+            )
         )
     assert results.count(True) == 1
     store.finish("owner", 1, row["id"], "succeeded", 42)

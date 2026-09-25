@@ -12,6 +12,7 @@ from starlette.routing import Route
 
 from .config import Settings
 from .errors import AppError
+from .public import homepage, privacy
 from .server import principal
 
 
@@ -26,7 +27,10 @@ class Guard:
         values = dict(headers)
         if len([k for k, _ in headers if k in (b"authorization", b"host")]) != 2:
             return await JSONResponse({"error": "unauthorized"}, 401)(scope, receive, send)
-        if values.get(b"host", b"").decode() != self.settings.host or b"origin" in values:
+        if (
+            values.get(b"host", b"").decode("ascii", errors="replace") != self.settings.host
+            or b"origin" in values
+        ):
             return await JSONResponse({"error": "forbidden_host_or_origin"}, 403)(
                 scope, receive, send
             )
@@ -77,6 +81,8 @@ def build_remote(server, settings: Settings, upstream):
     # Guard wraps every MCP method including GET/DELETE/initialization/discovery.
     app = Starlette(
         routes=[
+            Route("/", homepage),
+            Route("/privacy", privacy),
             Route("/health", health),
             Route(
                 "/mcp",

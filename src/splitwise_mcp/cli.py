@@ -44,11 +44,33 @@ def main():
     )
     args = parser.parse_args()
     try:
+        if args.command == "serve" and os.getenv("SW_SETUP_ONLY", "false") == "true":
+            import uvicorn
+
+            from .public import setup_app
+
+            if os.getenv("SW_REMOTE", "false") != "true":
+                raise AppError(
+                    "configuration", "Setup deployment requires SW_REMOTE=true explicitly."
+                )
+            port = int(os.getenv("PORT", "8000"))
+            if not 1 <= port <= 65535:
+                raise AppError("configuration", "Invalid PORT.")
+            uvicorn.run(
+                setup_app(),
+                host="0.0.0.0",
+                port=port,
+                access_log=False,
+                proxy_headers=False,
+                limit_concurrency=16,
+                timeout_graceful_shutdown=30,
+            )
+            return
         settings = Settings.from_env()
         store = Store(settings.database)
         if args.command == "migrate":
             store.migrate()
-            print("Schema version 1 ready.")
+            print("Schema version 2 ready.")
             return
         if store.postgres:
             store.check_schema()

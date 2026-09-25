@@ -84,12 +84,22 @@ class Store:
             for statement in DDL.split(";"):
                 if statement.strip():
                     self.sql(conn, statement)
+            versions = {
+                r["version"] for r in self.sql(conn, "SELECT version FROM sw_schema").fetchall()
+            }
+            if not versions <= {1, 2}:
+                raise AppError(
+                    "persistence_unavailable", "Database schema is newer than this application."
+                )
+            if 2 not in versions:
+                self.sql(conn, "ALTER TABLE sw_operations ADD COLUMN approval_expires BIGINT")
+                self.sql(conn, "INSERT INTO sw_schema(version) VALUES (2)")
 
     def check_schema(self):
         try:
             with self.transaction() as conn:
                 versions = self.sql(conn, "SELECT version FROM sw_schema").fetchall()
-                if {r["version"] for r in versions} != {1}:
+                if {r["version"] for r in versions} != {1, 2}:
                     raise ValueError
         except Exception:
             raise AppError(
@@ -162,22 +172,61 @@ class Store:
                 )
             return self._verify(dict(row))
 
-    def approve(self, owner: str, account: int, draft_id: str, approval_hash: str):
+    def approve(
+        self, owner: str, account: int, draft_id: str, approval_hash: str, approval_expires: int
+    ):
+        """Persist verified evidence for a trusted external approval interface, without submitting."""
         with self.transaction() as conn:
-            self.sql(
-                conn,
-                """UPDATE sw_operations SET state='approved',approval_hash=?
-                WHERE id=? AND owner=? AND account=? AND state='pending_approval' AND expires>=?""",
-                (approval_hash, draft_id, owner, account, int(time.time())),
+            now = int(time.time())
+            return (
+                self.sql(
+                    conn,
+                    """UPDATE sw_operations SET state='approved',approval_hash=?,approval_expires=?
+                WHERE id=? AND owner=? AND account=? AND state IN ('pending_approval','approved')
+                AND expires>? AND ?>? AND ?<=expires""",
+                    (
+                        approval_hash,
+                        approval_expires,
+                        draft_id,
+                        owner,
+                        account,
+                        now,
+                        approval_expires,
+                        now,
+                        approval_expires,
+                    ),
+                ).rowcount
+                == 1
             )
 
-    def reserve(self, owner: str, account: int, draft_id: str, approval_hash: str) -> bool:
+    def reserve(
+        self, owner: str, account: int, draft_id: str, approval_hash: str, approval_expires: int
+    ) -> bool:
+        """Accept current verified evidence and reserve in ONE conditional transaction.
+
+        A fresh approval can replace evidence only before submission. The same predicate
+        enforces both expiry deadlines, so concurrent callers cannot claim a stale grant.
+        """
         with self.transaction() as conn:
+            now = int(time.time())
             result = self.sql(
                 conn,
-                """UPDATE sw_operations SET state='submitting',lease_until=?
-                WHERE id=? AND owner=? AND account=? AND state='approved' AND approval_hash=? AND expires>=?""",
-                (int(time.time()) + 120, draft_id, owner, account, approval_hash, int(time.time())),
+                """UPDATE sw_operations SET state='submitting',lease_until=?,
+                approval_hash=?,approval_expires=?,error_code=NULL
+                WHERE id=? AND owner=? AND account=? AND state IN ('pending_approval','approved')
+                AND expires>? AND ?>? AND ?<=expires""",
+                (
+                    now + 120,
+                    approval_hash,
+                    approval_expires,
+                    draft_id,
+                    owner,
+                    account,
+                    now,
+                    approval_expires,
+                    now,
+                    approval_expires,
+                ),
             )
             return result.rowcount == 1
 

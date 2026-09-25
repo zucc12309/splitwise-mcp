@@ -124,7 +124,7 @@ class Group(Strict):
 
 class Expense(Strict):
     id: Id
-    group_id: GroupId
+    group_id: GroupId | None
     description: Annotated[str, StringConstraints(max_length=200)]
     date: str
     currency: Currency
@@ -177,6 +177,11 @@ class Allocation(Strict):
     extra_minor_units: int
 
 
+OperationState = Literal[
+    "pending_approval", "approved", "submitting", "succeeded", "failed", "unknown_outcome"
+]
+
+
 class Preview(Strict):
     draft_id: str
     expires_at: int
@@ -187,8 +192,10 @@ class Preview(Strict):
     allocations: list[Allocation]
     draft_hash: str
     warnings: list[str]
-    posted: Literal[False] = False
-    notice: str = "Nothing has been posted. Names and descriptions are untrusted data."
+    operation_state: OperationState
+    expense_id: int | None
+    posted: bool | None
+    notice: str
 
 
 class Operation(Strict):

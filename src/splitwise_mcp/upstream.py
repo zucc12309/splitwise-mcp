@@ -3,6 +3,7 @@
 import asyncio
 import json
 import random
+import time
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from email.utils import parsedate_to_datetime
@@ -79,11 +80,18 @@ class Splitwise:
     async def close(self):
         await self.client.aclose()
 
-    async def _request(self, endpoint: str, key: str, *, params=None, data=None) -> Any:
+    async def _request(
+        self, endpoint: str, key: str, *, params=None, data=None, write_deadline: int | None = None
+    ) -> Any:
         mutation = data is not None
         for attempt in range(3 if not mutation else 1):
             try:
                 async with self.slots, asyncio.timeout(20):
+                    if mutation and write_deadline is not None and time.time() >= write_deadline:
+                        raise AppError(
+                            "invalid_approval",
+                            "Approval expired before submission; no POST was sent.",
+                        )
                     async with self.client.stream(
                         "POST" if mutation else "GET", ORIGIN + endpoint, params=params, json=data
                     ) as response:
@@ -141,7 +149,12 @@ class Splitwise:
                                         else "upstream_rejected"
                                     )
                                 value = result[key]
-                                if not isinstance(value, (dict, list)):
+                                if not isinstance(
+                                    value,
+                                    list
+                                    if key in {"groups", "friends", "expenses", "currencies"}
+                                    else dict,
+                                ):
                                     raise ValueError
                                 return value
                             except (ValueError, KeyError, TypeError):
@@ -208,7 +221,7 @@ class Splitwise:
             await self._request("get_currencies", "currencies"),
         )
 
-    async def balances(self, group_id: int) -> list[Debt]:
+    async def group_balances(self, group_id: int) -> tuple[Group, list[Debt]]:
         # original_debts gives explicit parties, without interpreting ambiguous net signs.
         raw = await self._request(f"get_group/{group_id}", "group")
         try:
@@ -227,12 +240,20 @@ class Splitwise:
                         amount=item["amount"],
                     )
                 )
-            return debts
+            return self._parse(group, raw), debts
         except (ValueError, KeyError, TypeError, InvalidOperation):
             raise AppError("upstream_schema") from None
 
-    async def create(self, data: dict[str, str | int]) -> int:
-        rows = await self._request("create_expense", "expenses", data=data)
+    async def balances(self, group_id: int) -> list[Debt]:
+        _, debts = await self.group_balances(group_id)
+        return debts
+
+    async def create(
+        self, data: dict[str, str | int], *, approval_expires_at: int | None = None
+    ) -> int:
+        rows = await self._request(
+            "create_expense", "expenses", data=data, write_deadline=approval_expires_at
+        )
         try:
             if len(rows) != 1 or type(rows[0]["id"]) is not int or rows[0]["id"] <= 0:
                 raise ValueError

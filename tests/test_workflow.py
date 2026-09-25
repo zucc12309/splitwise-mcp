@@ -195,7 +195,9 @@ async def test_restart_after_approval(make_service, sign, store):
     service = make_service()
     p = await preview(service)
     evidence = sign(p)
-    store.approve("owner", 1, p.draft_id, hashlib.sha256(evidence.encode()).hexdigest())
+    store.approve(
+        "owner", 1, p.draft_id, hashlib.sha256(evidence.encode()).hexdigest(), p.expires_at
+    )
     assert Store(store.database).get("owner", 1, p.draft_id)["state"] == "approved"
 
 
@@ -226,7 +228,7 @@ def test_migration_idempotent_preserves_unrelated_table(store):
     store.check_schema()
     with store.transaction() as conn:
         assert conn.execute("SELECT value FROM unrelated").fetchone()[0] == "keep"
-        assert conn.execute("SELECT COUNT(*) FROM sw_schema").fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM sw_schema").fetchone()[0] == 2
 
 
 async def test_expired_draft_and_cross_draft_evidence(make_service, sign, store):
